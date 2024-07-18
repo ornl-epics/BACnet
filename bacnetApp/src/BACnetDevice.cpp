@@ -584,6 +584,19 @@ void BACnetDevice::tsmApduTimeoutHandler(Tsm &tsm) {
 		 * or the user realizes that they made a mistake and removes this instance from the definition file*/
 		this->bindStatus = UNBOUND;
 	}
+
+	BACnetVariable *var = tsm.getCallbackVariable();
+	if(var) {
+		var->setTimeoutError();
+	}
+	std::list<BACnetVariable *> const *varList = tsm.getRpmCallbackVariable();
+	if (varList) {
+		for (std::list<BACnetVariable *>::const_iterator itr = varList->begin();
+				itr != varList->end(); ++itr) {
+			(*itr)->setTimeoutError();
+		}
+	}
+
 	cout << "Freeing TSM..." << endl << endl;
 	this->tsmp->freeTsm(&tsm);
 }
@@ -1520,7 +1533,7 @@ void BACnetDevice::createRpmList(BACnetVariableList_t &listIn, ListOfBacVarList_
 						 * so same object-ids should be grouped together.
 						 * */
 
-						while((*listInItr)->getObjectIdentifier() == opRef->getObjectId()) {
+						while(listInItr != listIn.end() && (*listInItr)->getObjectIdentifier() == opRef->getObjectId()) {
 
 							if((*listInItr)->hasDataInPropValList()) {
 
@@ -1895,8 +1908,3 @@ uint32_t BACnetDevice::getRx(void) const {
 uint32_t BACnetDevice::getEr(void) const {
 	return this->er;
 }
-
-
-
-
-
